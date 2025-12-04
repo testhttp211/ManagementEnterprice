@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Enterprise (Final)</title>
+    <style>
+        :root {
+            --primary: #2563eb; /* Biru Royal */
+            --bg: #f1f5f9;
+            --sidebar: #0f172a;
+            --card: #ffffff;
+            --text: #1e293b;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+        * { box-sizing: border-box; outline: none; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text); }
+
+        /* SIDEBAR */
+        .sidebar { width: 250px; background: var(--sidebar); color: #cbd5e1; display: flex; flex-direction: column; flex-shrink: 0; }
+        .brand { padding: 25px; font-size: 22px; font-weight: 800; text-align: center; color: white; border-bottom: 1px solid #334155; letter-spacing: 1px; }
+        .menu { flex: 1; padding: 20px 10px; overflow-y: auto; }
+        .menu-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; gap: 12px; font-size: 14px; }
+        .menu-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .menu-item.active { background: var(--primary); color: white; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .footer { padding: 20px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #334155; }
+
+        /* MAIN CONTENT */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header { background: var(--card); padding: 15px 30px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .content { flex: 1; padding: 30px; overflow-y: auto; }
+
+        /* COMPONENTS */
+        .card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #e2e8f0; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        
+        h1, h2, h3 { margin: 0 0 15px 0; color: #0f172a; }
+        .stat-val { font-size: 28px; font-weight: 800; margin-top: 5px; letter-spacing: -0.5px; }
+        
+        /* TABLES */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8fafc; text-align: left; padding: 12px; font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        tr:hover { background: #f8fafc; }
+
+        /* FORMS */
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #64748b; }
+        input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; font-size: 14px; transition: 0.2s; }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn:hover { filter: brightness(110%); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* UTILS */
+        .hidden { display: none; }
+        .active-section { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* MODAL */
+        .modal-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); display: none; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(2px); }
+        .modal { background: white; padding: 30px; border-radius: 16px; width: 500px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); animation: zoomIn 0.2s; }
+        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        /* ANIMASI CHART BIAR KEREN */
+        .chart-bar { animation: growUp 0.8s ease-out forwards; transform-origin: bottom; transform: scaleY(0); }
+        .chart-line { animation: drawLine 1s ease-out forwards; stroke-dasharray: 1000; stroke-dashoffset: 1000; }
+        .chart-dot { animation: fadeIn 0.5s ease-out 0.8s forwards; opacity: 0; }
+        
+        @keyframes growUp { to { transform: scaleY(1); } }
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+        @keyframes fadeIn { to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand">Management Enterprice</div>
+        <div class="menu">
+            <div class="menu-item active" onclick="nav('dashboard')">📊 Dashboard</div>
+            <div class="menu-item" onclick="nav('kasir')">💰 Kasir / Jual</div>
+            <div class="menu-item" onclick="nav('produk')">📦 Stok Produk</div>
+            <div class="menu-item" onclick="nav('hutang')">📒 Buku Hutang</div>
+            <div class="menu-item" onclick="nav('pengeluaran')">💸 Pengeluaran</div>
+            <div class="menu-item" onclick="nav('laporan')">📈 Laporan</div>
+        </div>
+        <div class="footer">
+            Versi 3.0 Final<br>Offline Mode
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <div>
+                <h3 style="margin:0;">Halo Bos! Semangat Jualan 🔥</h3>
+                <small style="color:#64748b;" id="date-display">Senin, 1 Januari 2024</small>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="resetData()">⚠️ Reset Data</button>
+        </div>
+
+        <div class="content">
+
+            <section id="dashboard" class="active-section">
+                <div class="card" style="background:#1e293b; color:white; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:15px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-weight:bold;">📅 Filter:</span>
+                        <button class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2);" onclick="setFilter('7hari')">7 Hari</button>
+                        <button class="btn btn-sm" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2);" onclick="setFilter('bulan_ini')">Bulan Ini</button>
+                    </div>
+                    
+                    <div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.2); padding:5px 10px; border-radius:8px;">
+                        <small style="color:#94a3b8;">Custom:</small>
+                        <input type="date" id="f-start" style="padding:5px; border:none; border-radius:4px; font-size:12px; width:100px;">
+                        <span style="font-size:12px;">s/d</span>
+                        <input type="date" id="f-end" style="padding:5px; border:none; border-radius:4px; font-size:12px; width:100px;">
+                        <button class="btn btn-sm btn-primary" onclick="setFilter('custom')">🔍 Cari</button>
+                    </div>
+                </div>
+
+                <div class="grid-4">
+                    <div class="card">
+                        <small>Sisa Saldo (Cash)</small>
+                        <div class="stat-val" style="color:var(--primary);" id="d-saldo">Rp 0</div>
+                        <small style="font-size:10px; color:#94a3b8;">*Total akumulasi uang masuk</small>
+                    </div>
+                    <div class="card">
+                        <small>Omzet (Sesuai Filter)</small>
+                        <div class="stat-val" style="color:var(--success);" id="d-omzet">Rp 0</div>
+                    </div>
+                    <div class="card">
+                        <small>Pengeluaran (Sesuai Filter)</small>
+                        <div class="stat-val" style="color:var(--danger);" id="d-out">Rp 0</div>
+                    </div>
+                    <div class="card" style="cursor:pointer;" onclick="filterLowStock()">
+                        <small>⚠️ Stok Menipis</small>
+                        <div class="stat-val" style="color:#f59e0b;" id="d-alert">0 Item</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Grafik Penjualan (Omzet)</h3>
+                    <svg id="barChart" viewBox="0 0 500 150" style="width:100%; height:200px;"></svg>
+                </div>
+                <div class="card">
+                    <h3>Tren Saldo Bersih</h3>
+                    <svg id="lineChart" viewBox="0 0 500 150" style="width:100%; height:200px;"></svg>
+                </div>
+            </section>
+
+            <section id="kasir" class="hidden">
+                <div style="display: flex; gap: 20px; align-items: flex-start;">
+                    <div class="card" style="flex: 2;">
+                        <h2>Input Penjualan</h2>
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                            <div>
+    <label>Cari Produk (Nama / SKU)</label>
+    <input id="k-input" list="list-kasir" onchange="cekHarga()" placeholder="Ketik Nama / Scan SKU..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+    
+    <datalist id="list-kasir"></datalist>
+
+    <input type="hidden" id="k-selected-id">
+</div>
+                            <div>
+                                <label>Stok Tersedia</label>
+                                <input id="k-stok" disabled style="background:#f1f5f9; font-weight:bold;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label>Jumlah Beli</label>
+                                <input type="number" id="k-qty" value="1" min="1" oninput="cekHarga()">
+                            </div>
+                            <div>
+                                <label>Nama Pembeli (Opsional)</label>
+                                <input type="text" id="k-cust" placeholder="Umum / Reseller">
+                            </div>
+                        </div>
+
+                        <div style="background: #eff6ff; padding: 20px; border-radius: 12px; margin-top: 10px; text-align: right; border:1px solid #dbeafe;">
+                            <small style="color:#64748b;">Total Harus Dibayar:</small>
+                            <div id="k-total" style="font-size: 36px; font-weight: 800; color: var(--primary);">Rp 0</div>
+                        </div>
+
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 20px; height: 50px; font-size:16px;" onclick="bayar()">BAYAR / SIMPAN</button>
+                    </div>
+
+                    <div class="card" style="flex: 1; max-height: 500px; overflow-y: auto;">
+                        <h3>Transaksi Hari Ini</h3>
+                        <div id="k-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="produk" class="hidden">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                    <h2>Daftar Produk & Stok</h2>
+                    <button class="btn btn-primary" onclick="bukaModalProduk()">+ Tambah Produk</button>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Nama Produk</th>
+                                <th>Varian</th>
+                                <th>Harga</th>
+                                <th>HPP</th>
+                                <th>Stok</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbl-prod"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="hutang" class="hidden">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                    <h2>Buku Hutang</h2>
+                    <button class="btn btn-primary" onclick="modal('m-hutang')">+ Catat Hutang</button>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead><tr><th>Nama</th><th>Tanggal</th><th>Nominal</th><th>Status</th><th>Aksi</th></tr></thead>
+                        <tbody id="tbl-hutang"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="pengeluaran" class="hidden">
+                <h2>Catat Pengeluaran</h2>
+                <div class="card" style="max-width: 600px;">
+                    <label>Keterangan (Beli bahan, listrik, dll)</label>
+                    <input id="out-desc" placeholder="Contoh: Beli Tepung 5kg">
+                    <label>Nominal (Rp)</label>
+                    <input type="number" id="out-val">
+                    <label>Tanggal</label>
+                    <input type="date" id="out-date">
+                    <button class="btn btn-danger" onclick="simpanPengeluaran()">Simpan Pengeluaran</button>
+                </div>
+            </section>
+
+            <section id="laporan" class="hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2>Laporan Aktivitas</h2>
+                    <div>
+                        <button class="btn btn-primary" onclick="importData()">⬆️ Import Data (.CSV)</button>
+                        <button class="btn btn-success" onclick="downloadExcel()">⬇️ Export Data (.CSV)</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="height: 400px; overflow-y: auto;">
+                        <table>
+                            <thead><tr><th>Tanggal</th><th>Tipe</th><th>Keterangan</th><th>Nominal</th><th>Aksi</th></tr></thead>
+                            <tbody id="tbl-log"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="m-prod" class="modal-bg">
+        <div class="modal" style="width: 650px;"> <h3>Tambah Produk Baru</h3>
+            
+            <div style="background:#eff6ff; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #dbeafe;">
+                <label>1. Nama Produk Utama</label>
+                <input id="mp-name" placeholder="Contoh: Basreng Stik" style="margin-bottom:10px;">
+                
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1">
+                        <label style="color:#1e40af;">Harga Jual (Umum)</label>
+                        <input type="number" id="mp-global-price" placeholder="Rp" oninput="copyKeBawah()">
+                    </div>
+                    <div style="flex:1">
+                        <label style="color:#1e40af;">HPP / Modal (Umum)</label>
+                        <input type="number" id="mp-global-hpp" placeholder="Rp" oninput="copyKeBawah()">
+                    </div>
+                    <div style="flex:1">
+                        <label style="color:#1e40af;">Stok Awal (Umum)</label>
+                        <input type="number" id="mp-global-stok" placeholder="Pcs" oninput="copyKeBawah()">
+                    </div>
+                </div>
+                <small style="color:#64748b; font-size:11px;">*Mengisi angka di atas otomatis mengisi semua varian di bawah.</small>
+            </div>
+
+            <datalist id="list-varian">
+                <option value="Original">
+                <option value="Pedas Daun Jeruk">
+                <option value="Extra Pedas Mampus">
+                <option value="Gurih Daun Jeruk">
+                <option value="Balado">
+                <option value="Jagung Bakar">
+                <option value="Sapi Panggang">
+            </datalist>
+            <label style="margin-bottom:5px;">2. Daftar Varian (Detail)</label>
+            <div id="varian-list" style="max-height: 250px; overflow-y: auto; padding-right:5px;"></div>
+            
+            <button class="btn btn-sm" style="width:100%; border:1px dashed #cbd5e1; background:white; color:#2563eb; margin-top:10px;" onclick="tambahBarisVarian()">
+                + Tambah Varian Lain
+            </button>
+
+            <div style="text-align:right; display:flex; gap:10px; justify-content:flex-end; margin-top:20px; border-top:1px solid #e2e8f0; padding-top:15px;">
+                <button class="btn" style="background:#f1f5f9; color:#64748b;" onclick="closeModal()">Batal</button>
+                <button class="btn btn-primary" onclick="simpanProduk()">Simpan Semua</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="m-stok" class="modal-bg">
+        <div class="modal">
+            <h3>Tambah Stok</h3>
+            <p id="ms-label" style="color:#64748b; margin-bottom:15px;">-</p>
+            <input type="number" id="ms-val" placeholder="Jumlah Stok Masuk">
+            <div style="text-align:right;">
+                <button class="btn" style="background:#f1f5f9;" onclick="closeModal()">Batal</button>
+                <button class="btn btn-primary" onclick="saveStok()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="m-edit" class="modal-bg">
+        <div class="modal" style="width: 400px;">
+            <h3>✏️ Edit Produk</h3>
+            <input type="hidden" id="me-id"> <label>Nama Varian</label>
+            <input id="me-varian" style="margin-bottom:10px;">
+
+            <label>Harga Jual</label>
+            <input type="number" id="me-harga" style="margin-bottom:10px;">
+
+            <label>HPP (Modal)</label>
+            <input type="number" id="me-hpp" style="margin-bottom:10px;">
+            
+            <div style="text-align:right; margin-top:20px;">
+                <button class="btn" style="background:#f1f5f9;" onclick="closeModal()">Batal</button>
+                <button class="btn btn-success" onclick="simpanEdit()">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="m-hutang" class="modal-bg">
+        <div class="modal">
+            <h3>Catat Hutang Baru</h3>
+            <input id="mh-name" placeholder="Nama Peminjam">
+            <input type="number" id="mh-val" placeholder="Nominal Hutang">
+            <div style="text-align:right;">
+                <button class="btn" style="background:#f1f5f9;" onclick="closeModal()">Batal</button>
+                <button class="btn btn-primary" onclick="saveHutang()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA & CONFIG ---
+        const KEY = 'ManagementEnterprise_V1';
+        let db = { produk: [], log: [], hutang: [] };
+        let filterMode = '7hari';
+        let tglMulai = '', tglAkhir = '';
+        let editStokId = null;
+
+        // --- 1. CORE SYSTEM ---
+        function init() {
+            const saved = localStorage.getItem(KEY);
+            if(saved) db = JSON.parse(saved);
+            
+            // Format Tanggal Header
+            const opt = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-display').innerText = new Date().toLocaleDateString('id-ID', opt);
+            document.getElementById('out-date').valueAsDate = new Date();
+            
+            setFilter('7hari'); // Auto load grafik
+        }
+
+        // --- FUNGSI BANTU: Biar Tanggal Gak Error (WIB/Lokal) ---
+        function getLocalDate(d) {
+            const z = d.getTime() - (d.getTimezoneOffset() * 60000);
+            return new Date(z).toISOString().split('T')[0];
+        }
+
+        function save() {
+            localStorage.setItem(KEY, JSON.stringify(db));
+            renderAll();
+        }
+
+        function nav(id) {
+            // Hide all sections
+            document.querySelectorAll('section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('active-section');
+            });
+            // Show selected
+            const target = document.getElementById(id);
+            target.classList.remove('hidden');
+            target.classList.add('active-section');
+            
+            // Update Menu Active State
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            if(id === 'kasir') loadKasir();
+            if(id === 'produk') { resetJudul(); renderAll(); }
+        }
+
+        function modal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal() { document.querySelectorAll('.modal-bg').forEach(e => e.style.display='none'); }
+        function rp(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
+
+        // --- 2. KASIR LOGIC (BUG FREE) ---
+        function loadKasir() {
+            // 1. Siapkan Datalist (Daftar Pencarian)
+            const dl = document.getElementById('list-kasir');
+            dl.innerHTML = '';
+
+            // 2. Isi opsi dengan format lengkap biar gampang dicari
+            db.produk.forEach(p => {
+                // Tampilan: "Basreng - Pedas [BAS-250-123]"
+                const display = `${p.nama} - ${p.varian} [${p.sku}]`;
+                
+                const opt = document.createElement('option');
+                opt.value = display; // Ini teks yang muncul saat dicari
+                dl.appendChild(opt);
+            });
+
+            // 3. Reset inputan biar bersih
+            document.getElementById('k-input').value = '';
+            document.getElementById('k-selected-id').value = '';
+            document.getElementById('k-qty').value = 1;
+            document.getElementById('k-stok').value = '';
+            document.getElementById('k-total').innerText = 'Rp 0';
+
+            // 4. Load History Transaksi Hari Ini (Logika Sama seperti sebelumnya)
+            const list = document.getElementById('k-list');
+            list.innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            const logs = db.log.filter(l => l.tgl === today && l.tipe === 'masuk');
+
+            if(logs.length === 0) list.innerHTML = '<small style="color:#aaa">Belum ada transaksi.</small>';
+            else {
+                logs.reverse().forEach(l => {
+                    list.innerHTML += `
+                    <div style="border-bottom:1px solid #eee; padding:8px 0; font-size:12px; display:flex; justify-content:space-between;">
+                        <span>${l.ket}</span>
+                        <span style="font-weight:bold;">${rp(l.nom)}</span>
+                    </div>`;
+                });
+            }
+        }
+
+        function cekHarga() {
+            const val = document.getElementById('k-input').value;
+            const qty = document.getElementById('k-qty').value;
+            
+            // LOGIKA PENCARIAN PINTAR:
+            // 1. Coba cari yang cocok Text-nya (Kalau user pilih dari list)
+            let p = db.produk.find(x => `${x.nama} - ${x.varian} [${x.sku}]` === val);
+
+            // 2. Kalau gak ketemu, coba cari berdasarkan SKU-nya saja (Kalau user Scan Barcode)
+            if (!p) {
+                p = db.produk.find(x => x.sku === val);
+            }
+
+            // Jika Produk Ditemukan
+            if(p) {
+                // Simpan ID produk ke input rahasia (biar nanti pas bayar gampang)
+                document.getElementById('k-selected-id').value = p.id;
+
+                // Tampilkan info harga & stok
+                document.getElementById('k-stok').value = p.stok;
+                document.getElementById('k-total').innerText = rp(p.harga * qty);
+                
+                // Peringatan stok
+                if(p.stok < qty) document.getElementById('k-stok').style.color = 'red';
+                else document.getElementById('k-stok').style.color = 'black';
+            } else {
+                // Kalau produk tidak valid / belum dipilih
+                document.getElementById('k-selected-id').value = '';
+                document.getElementById('k-stok').value = '';
+                document.getElementById('k-total').innerText = 'Rp 0';
+            }
+        }
+
+        function bayar() {
+            // PERUBAHAN PENTING DI SINI:
+            // Dulu kita ambil dari 'k-prod', sekarang kita ambil dari 'k-selected-id'
+            const id = document.getElementById('k-selected-id').value;
+            
+            const qty = parseInt(document.getElementById('k-qty').value);
+            const cust = document.getElementById('k-cust').value || 'Umum';
+
+            // Validasi
+            if(!id || qty < 1) return alert('Pilih produk & jumlah yang benar!');
+            
+            // Cari data produk berdasarkan ID
+            const p = db.produk.find(x => String(x.id) === String(id));
+            
+            if(!p) return alert('Produk tidak ditemukan! Coba cari ulang.');
+            if(p.stok < qty) return alert('Stok tidak cukup!');
+
+            // 1. Kurangi Stok
+            p.stok -= qty;
+            
+            // 2. Siapkan Nama untuk Laporan
+            let namaLog = p.nama;
+            if(p.varian && p.varian !== '-') namaLog += ` (${p.varian})`;
+            
+            // 3. Simpan ke Log Transaksi
+            db.log.push({
+                id: Date.now(),
+                tgl: new Date().toISOString().split('T')[0],
+                tipe: 'masuk',
+                ket: `Jual ${namaLog} (x${qty}) - ${cust}`,
+                nom: p.harga * qty,
+                omzet: p.harga * qty
+            });
+
+            save();
+            alert('Transaksi Berhasil! 💰');
+            
+            // 4. Reset Form Kasir (Panggil fungsi loadKasir biar bersih lagi)
+            loadKasir(); 
+        }
+        // --- 3. PRODUK LOGIC (MULTI VARIAN) ---
+        // 1. FUNGSI BUKA MODAL (Reset Form)
+        function bukaModalProduk() {
+            modal('m-prod');
+            document.getElementById('mp-name').value = '';
+            document.getElementById('mp-global-price').value = ''; // Reset Harga Global
+            document.getElementById('mp-global-hpp').value = '';
+            document.getElementById('mp-global-stok').value = '';  // Reset Stok Global
+            document.getElementById('varian-list').innerHTML = ''; 
+            
+            // Fokus ke nama produk biar langsung ketik
+            document.getElementById('mp-name').focus();
+            
+            tambahBarisVarian(); // Tambah 1 baris otomatis
+        }
+        function copyKeBawah() {
+            const h = document.getElementById('mp-global-price').value;
+            const m = document.getElementById('mp-global-hpp').value;
+            const s = document.getElementById('mp-global-stok').value;
+
+            // Cari semua input di baris bawah dan isi nilainya
+            document.querySelectorAll('.v-price').forEach(el => el.value = h);
+            document.querySelectorAll('.v-hpp').forEach(el => el.value = m);
+            document.querySelectorAll('.v-stok').forEach(el => el.value = s);
+        }
+
+        // 2. FUNGSI TAMBAH BARIS (Versi Ringkas: Tanpa Harga/Stok)
+        function tambahBarisVarian() {
+            const id = Date.now() + Math.random().toString().substr(2, 5);
+            
+            // Ambil nilai global saat ini
+            const defPrice = document.getElementById('mp-global-price').value;
+            const defHpp = document.getElementById('mp-global-hpp').value;
+            const defStok = document.getElementById('mp-global-stok').value;
+
+            const html = `
+            <div id="row-${id}" style="border:1px solid #cbd5e1; padding:10px; border-radius:8px; margin-bottom:10px; background:#f8fafc; position:relative;">
+                <button onclick="document.getElementById('row-${id}').remove()" style="position:absolute; top:5px; right:5px; background:#ef4444; color:white; border:none; width:20px; height:20px; border-radius:4px; cursor:pointer; font-size:10px;">✕</button>
+
+                <div style="display:flex; gap:8px; align-items:flex-end;">
+                    <div style="flex:1.5;">
+                        <label style="font-size:10px; font-weight:bold;">Varian (Pilih/Ketik)</label>
+                        <input class="v-name" list="list-varian" placeholder="Klik tanda panah..." oninput="autoSKUBaris('${id}')" style="margin:0; font-size:12px; padding:6px;">
+                    </div>
+                    <div style="flex:1.5;">
+                        <label style="font-size:10px; font-weight:bold;">SKU</label>
+                        <div style="display:flex;">
+                            <input class="v-sku" readonly style="margin:0; font-size:12px; padding:6px; background:#e2e8f0; width:100%;">
+                            <button class="btn btn-sm btn-primary" onclick="autoSKUBaris('${id}')" style="padding:2px 8px;">⚡</button>
+                        </div>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:10px; font-weight:bold; color:green;">Harga</label>
+                        <input type="number" class="v-price" value="${defPrice}" style="margin:0; font-size:12px; padding:6px;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:10px; font-weight:bold;">HPP</label>
+                        <input type="number" class="v-hpp" value="${defHpp}" style="margin:0; font-size:12px; padding:6px;">
+                    </div>
+                    <div style="flex:0.8;">
+                        <label style="font-size:10px; font-weight:bold;">Stok</label>
+                        <input type="number" class="v-stok" value="${defStok}" style="margin:0; font-size:12px; padding:6px;">
+                    </div>
+                </div>
+            </div>`;
+            
+            document.getElementById('varian-list').insertAdjacentHTML('beforeend', html);
+        }
+
+        // --- 1. FITUR AUTO SKU (Supaya SKU otomatis terisi) ---
+        function autoSKUBaris(idRow) {
+            const namaUtama = document.getElementById('mp-name').value;
+            const row = document.getElementById('row-' + idRow);
+            
+            // Fokus ke nama produk kalau belum diisi
+            if(!namaUtama) { document.getElementById('mp-name').focus(); return; }
+
+            const vName = row.querySelector('.v-name').value;
+            
+            // Rumus SKU: 3 Huruf Depan Nama + 3 Huruf Varian + Angka Acak
+            const s1 = namaUtama.substring(0,3).toUpperCase().replace(/\s/g, '');
+            const s2 = vName ? vName.substring(0,3).toUpperCase().replace(/\s/g, '') : 'VAR';
+            const rnd = Math.floor(Math.random() * 999);
+            
+            row.querySelector('.v-sku').value = `${s1}-${s2}-${rnd}`;
+        }
+
+        // --- 2. FUNGSI SIMPAN (Versi Fix: Baca Harga Per Baris) ---
+        function simpanProduk() {
+            // A. Ambil Nama Produk Utama
+            const nama = document.getElementById('mp-name').value;
+            if(!nama) return alert('Nama Produk Utama wajib diisi!');
+
+            // B. Cek apakah ada varian
+            const rows = document.querySelectorAll('#varian-list > div');
+            if(rows.length === 0) return alert('Minimal isi 1 varian!');
+
+            let dataValid = true;
+
+            // C. Loop setiap baris (PENTING: Kita ambil data DARI DALAM BARIS)
+            rows.forEach(r => {
+                const varian = r.querySelector('.v-name').value || 'Standard';
+                const sku = r.querySelector('.v-sku').value;
+                
+                // Ambil angka dari kotak input DI DALAM BARIS ITU
+                const harga = parseInt(r.querySelector('.v-price').value);
+                const hpp = parseInt(r.querySelector('.v-hpp').value);
+                const stok = parseInt(r.querySelector('.v-stok').value);
+
+                // Validasi: Harga gak boleh 0 atau kosong
+                if(!harga) {
+                    dataValid = false;
+                } else {
+                    // Simpan ke database
+                    db.produk.push({ 
+                        id: Date.now() + Math.random(), 
+                        nama: nama, 
+                        varian: varian, 
+                        sku: sku, 
+                        harga: harga,    // Harga spesifik varian ini
+                        hpp: hpp || 0,   // HPP spesifik varian ini
+                        stok: stok || 0  // Stok spesifik varian ini
+                    });
+                }
+            });
+
+            if(!dataValid) return alert('Mohon lengkapi Harga Jual di semua varian!');
+
+            closeModal();
+            save();
+            
+            // Refresh tabel kalau sedang di menu produk
+            if(document.getElementById('produk').classList.contains('active-section')) {
+                renderAll();
+            }
+        }
+
+        // 1. Fungsi Buka Modal Edit & Isi Datanya
+        function bukaEdit(id) {
+            const p = db.produk.find(x => x.id == id);
+            if(p) {
+                document.getElementById('me-id').value = id;
+                document.getElementById('me-varian').value = p.varian;
+                document.getElementById('me-harga').value = p.harga;
+                document.getElementById('me-hpp').value = p.hpp || 0;
+                
+                modal('m-edit'); // Buka modal
+            }
+        }
+
+        // 2. Fungsi Simpan Perubahan
+        function simpanEdit() {
+            const id = document.getElementById('me-id').value;
+            const varianBaru = document.getElementById('me-varian').value;
+            const hargaBaru = parseInt(document.getElementById('me-harga').value);
+            const hppBaru = parseInt(document.getElementById('me-hpp').value);
+
+            // Cari produk di database dan update
+            const p = db.produk.find(x => x.id == id);
+            if(p) {
+                p.varian = varianBaru;
+                p.harga = hargaBaru;
+                p.hpp = hppBaru;
+                
+                save(); // Simpan ke LocalStorage
+                closeModal();
+                renderAll(); // Refresh tabel
+                alert('Data berhasil diubah! ✅');
+            }
+        }
+
+        function hapusProd(id) {
+            if(confirm('Hapus produk ini?')) {
+                db.produk = db.produk.filter(p => p.id != id);
+                save();
+            }
+        }
+
+        function tambahStok(id) {
+            const p = db.produk.find(x => x.id == id);
+            if(p) {
+                editStokId = id;
+                document.getElementById('ms-label').innerText = `${p.nama} (${p.varian || '-'})`;
+                document.getElementById('ms-val').value = '';
+                modal('m-stok');
+                document.getElementById('ms-val').focus();
+            }
+        }
+
+        function saveStok() {
+            const val = parseInt(document.getElementById('ms-val').value);
+            if(val) {
+                const p = db.produk.find(x => x.id == editStokId);
+                p.stok += val;
+                save();
+                closeModal();
+            }
+        }
+
+        // --- 4. RENDER & DASHBOARD ---
+        // --- 4. RENDER & DASHBOARD ---
+        function renderAll() {
+            // A. TABEL PRODUK (VERSI GROUPING / KELOMPOK)
+            const tp = document.getElementById('tbl-prod'); 
+            tp.innerHTML = '';
+            let lowStockCount = 0;
+
+            // 1. Kelompokkan Data dulu biar rapi
+            const groups = {};
+            db.produk.forEach(p => {
+                if(p.stok < 10) lowStockCount++; // Sekalian hitung stok tipis
+                
+                // Masukkan ke grup berdasarkan NAMA UTAMA
+                if(!groups[p.nama]) groups[p.nama] = [];
+                groups[p.nama].push(p);
+            });
+
+            // 2. Tampilkan (Render) per Kelompok
+            if(db.produk.length === 0) {
+                tp.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#aaa;">Belum ada produk. Klik Tambah Produk di atas!</td></tr>';
+            }
+
+            Object.keys(groups).forEach(namaProd => {
+                const listVarian = groups[namaProd];
+                // Hitung total stok per produk utama
+                const totalStok = listVarian.reduce((a,b)=> a + b.stok, 0);
+
+                // --- HEADER PRODUK UTAMA (Warna Abu) ---
+                tp.innerHTML += `
+                    <tr style="background:#e2e8f0; border-top:2px solid #cbd5e1;">
+                        <td colspan="7" style="padding:10px 15px;">
+                            <b style="font-size:14px; color:#0f172a;">📦 ${namaProd}</b>
+                            <span style="font-size:12px; color:#64748b; margin-left:10px; background:white; padding:2px 8px; border-radius:10px;">Total Stok: ${totalStok} Pcs</span>
+                        </td>
+                    </tr>
+                `;
+
+                // --- ITEM VARIAN (Di bawahnya) ---
+                listVarian.forEach(p => {
+                    const vLabel = p.varian && p.varian !== '-' ? p.varian : 'Standard';
+                    
+                    tp.innerHTML += `
+                    <tr style="background:white; border-bottom:1px solid #f1f5f9;">
+                        <td style="padding-left:30px; font-family:monospace; color:#64748b; font-size:12px;">↳ ${p.sku}</td>
+                        
+                        <td style="color:#94a3b8; font-size:12px;">(Sub-Produk)</td>
+                        
+                        <td><span style="background:#eff6ff; color:#1d4ed8; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:600;">${vLabel}</span></td>
+                        
+                        <td style="color:green; font-weight:500;">${rp(p.harga)}</td>
+                        
+                        <td style="color:#64748b; font-size:13px;">${rp(p.hpp || 0)}</td>
+                        
+                        <td style="font-weight:bold; color:${p.stok<10?'red':'#334155'};">${p.stok}</td>
+                        
+                        <td style="white-space:nowrap;">
+                            <button class="btn btn-sm" style="background:#f59e0b; color:white; margin-right:4px;" onclick="bukaEdit(${p.id})" title="Edit Data">✎</button>
+
+                            <button class="btn btn-sm btn-primary" onclick="tambahStok(${p.id})" title="Tambah Stok">+</button>
+                            
+                            <button class="btn btn-sm btn-danger" onclick="hapusProd(${p.id})" title="Hapus">✕</button>
+                        </td>
+                    </tr>`;
+                });
+            });
+
+            // B. DASHBOARD & LOG (BAGIAN INI TETAP SAMA)
+            const tl = document.getElementById('tbl-log'); tl.innerHTML = '';
+            let saldo = 0, omzetF = 0, outF = 0;
+            
+            const sortedLogs = [...db.log].sort((a,b) => b.id - a.id);
+
+            sortedLogs.forEach(l => {
+                if(l.tipe == 'masuk') saldo += l.nom;
+                else if (l.tipe == 'keluar' || l.tipe == 'return') saldo -= l.nom;
+
+                if(l.tgl >= tglMulai && l.tgl <= tglAkhir) {
+                    if(l.tipe == 'masuk') omzetF += (l.omzet || l.nom);
+                    if(l.tipe == 'keluar') outF += l.nom;
+                }
+
+                let btn = '';
+                if(l.tipe == 'masuk') btn = `<button class="btn btn-sm btn-danger" onclick="returnBarang(${l.id})">↩️ Return</button>`;
+
+                tl.innerHTML += `<tr>
+                    <td>${l.tgl}</td>
+                    <td style="font-weight:bold; color:${l.tipe=='masuk'?'green':(l.tipe=='return'?'orange':'red')}">${l.tipe.toUpperCase()}</td>
+                    <td>${l.ket}</td>
+                    <td>${rp(l.nom)}</td>
+                    <td>${btn}</td>
+                </tr>`;
+            });
+
+            document.getElementById('d-saldo').innerText = rp(saldo);
+            document.getElementById('d-omzet').innerText = rp(omzetF);
+            document.getElementById('d-out').innerText = rp(outF);
+            document.getElementById('d-alert').innerText = lowStockCount + ' Item';
+
+            // C. HUTANG
+            const th = document.getElementById('tbl-hutang'); th.innerHTML = '';
+            db.hutang.forEach(h => {
+                if(!h.lunas) {
+                    th.innerHTML += `<tr>
+                        <td>${h.nama}</td><td>${h.tgl}</td><td>${rp(h.nom)}</td>
+                        <td><span style="background:#fee2e2; color:red; padding:2px 5px; border-radius:4px; font-size:11px;">Belum Lunas</span></td>
+                        <td><button class="btn btn-sm btn-success" onclick="lunasHutang(${h.id})">Lunas</button></td>
+                    </tr>`;
+                }
+            });
+
+            // D. GRAFIK (Render Ulang Grafik)
+            if(document.getElementById('dashboard').classList.contains('active-section')){
+                renderBarChart();
+                renderLineChart();
+            }
+        }
+
+        // --- 5. HUTANG & PENGELUARAN ---
+        function saveHutang() {
+            const nama = document.getElementById('mh-name').value;
+            const nom = parseInt(document.getElementById('mh-val').value);
+            if(nama && nom) {
+                db.hutang.push({ id: Date.now(), nama, nom, lunas: false, tgl: new Date().toISOString().split('T')[0] });
+                closeModal(); save();
+            }
+        }
+        function lunasHutang(id) {
+            if(confirm('Sudah lunas?')) {
+                const h = db.hutang.find(x => x.id == id);
+                h.lunas = true;
+                db.log.push({ id: Date.now(), tgl: new Date().toISOString().split('T')[0], tipe: 'masuk', ket: `Pelunasan Hutang ${h.nama}`, nom: h.nom });
+                save();
+            }
+        }
+        function simpanPengeluaran() {
+            const ket = document.getElementById('out-desc').value;
+            const nom = parseInt(document.getElementById('out-val').value);
+            const tgl = document.getElementById('out-date').value;
+            if(ket && nom) {
+                db.log.push({ id: Date.now(), tgl, tipe: 'keluar', ket, nom });
+                document.getElementById('out-desc').value = '';
+                document.getElementById('out-val').value = '';
+                save();
+            }
+        }
+
+        // --- 6. FILTER TANGGAL (UPDATE CUSTOM) ---
+        function setFilter(mode) {
+            const today = new Date();
+            
+            if(mode === '7hari') {
+                let d = new Date(); d.setDate(d.getDate() - 6);
+                tglMulai = d.toISOString().split('T')[0];
+                tglAkhir = today.toISOString().split('T')[0];
+            } 
+            else if (mode === 'bulan_ini') {
+                tglMulai = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                tglAkhir = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+            }
+            else if (mode === 'custom') {
+                // Ambil dari input kalender
+                tglMulai = document.getElementById('f-start').value;
+                tglAkhir = document.getElementById('f-end').value;
+                
+                if(!tglMulai || !tglAkhir) {
+                    return alert('Pilih Tanggal Mulai dan Akhir dulu Bos!');
+                }
+            }
+            
+            // Set nilai ke input biar user tau tanggal yg aktif
+            document.getElementById('f-start').value = tglMulai;
+            document.getElementById('f-end').value = tglAkhir;
+
+            renderAll(); // Refresh semua data sesuai tanggal
+        }
+        // --- 1. GRAFIK BATANG PREMIUM (3D LOOK + SHADOW) ---
+        function renderBarChart() {
+            const svg = document.getElementById('barChart'); 
+            svg.innerHTML = '';
+            
+            if(!tglMulai || !tglAkhir) return;
+
+            const data = [];
+            let c = new Date(tglMulai); 
+            const e = new Date(tglAkhir);
+            
+            // Loop Data
+            while(c <= e) {
+                let s = getLocalDate(c);
+                
+                let inVal = db.log.filter(l => l.tgl === s && l.tipe === 'masuk').reduce((a,b)=>a+(b.omzet||b.nom),0);
+                let outVal = db.log.filter(l => l.tgl === s && l.tipe === 'keluar').reduce((a,b)=>a+b.nom,0);
+                
+                let lbl = `${c.getDate()}/${c.getMonth()+1}`;
+                data.push({ date: s, in: inVal, out: outVal, lbl: lbl });
+                c.setDate(c.getDate()+1);
+            }
+            
+            // Skala Max
+            const allVals = [];
+            data.forEach(d => { allVals.push(d.in); allVals.push(d.out); });
+            const maxVal = Math.max(...allVals, 100000);
+            const chartH = 120; 
+            
+            // --- EFEK VISUAL MAHAL (GRADASI & BAYANGAN) ---
+            svg.innerHTML += `
+                <defs>
+                    <linearGradient id="gradIn" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:0.8" />
+                    </linearGradient>
+                    
+                    <linearGradient id="gradOut" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#b91c1c;stop-opacity:0.8" />
+                    </linearGradient>
+
+                    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="#0f172a" flood-opacity="0.15"/>
+                    </filter>
+                </defs>
+            `;
+
+            // Grid Background
+            for(let i=0; i<=4; i++) {
+                let y = 150 - (i * (chartH/4));
+                svg.innerHTML += `<line x1="30" y1="${y}" x2="480" y2="${y}" stroke="#e2e8f0" stroke-dasharray="4" />`;
+                let lblVal = (maxVal * (i/4));
+                let txt = lblVal >= 1000000 ? (lblVal/1000000).toFixed(1)+'jt' : (lblVal/1000).toFixed(0)+'k';
+                if(i>0) svg.innerHTML += `<text x="25" y="${y+3}" font-size="9" fill="#94a3b8" text-anchor="end">${txt}</text>`;
+            }
+
+            // Render Batang
+            const w = 440 / (data.length || 1);
+            
+            data.forEach((d, i) => {
+                const hIn = (d.in / maxVal) * chartH;
+                const hOut = (d.out / maxVal) * chartH;
+                const x = 35 + (i * w);
+                
+                // BATANG BIRU (Pakai Filter Shadow & Rounded)
+                if(d.in > 0) {
+                    svg.innerHTML += `<rect x="${x + (w*0.1)}" y="${150 - hIn}" width="${w*0.35}" height="${hIn}" fill="url(#gradIn)" rx="3" filter="url(#softShadow)" />`;
+                }
+
+                // BATANG MERAH (Pakai Filter Shadow & Rounded)
+                if(d.out > 0) {
+                    svg.innerHTML += `<rect x="${x + (w*0.55)}" y="${150 - hOut}" width="${w*0.35}" height="${hOut}" fill="url(#gradOut)" rx="3" filter="url(#softShadow)" />`;
+                }
+
+                // Label Tanggal
+                if(data.length < 15 || i%2===0) {
+                    svg.innerHTML += `<text x="${x + (w/2)}" y="165" font-size="10" fill="#64748b" text-anchor="middle" font-weight="500">${d.lbl}</text>`;
+                }
+            });
+        }
+
+        // --- 2. GRAFIK GARIS ULTRA PREMIUM (NEON + SMOOTH CURVE) ---
+        // --- 2. GRAFIK GARIS ULTRA PREMIUM (NEON + AUTO COLOR) ---
+        function renderLineChart() {
+            const svg = document.getElementById('lineChart'); 
+            svg.innerHTML = '';
+            
+            if(!tglMulai || !tglAkhir) return;
+
+            // 1. SIAPKAN DATA
+            const points = [];
+            let saldoJalan = 0;
+            
+            // Hitung Saldo Awal (Akumulasi dari masa lalu)
+            db.log.forEach(l => {
+                if(l.tgl < tglMulai) {
+                    if(l.tipe=='masuk') saldoJalan += l.nom;
+                    else if (l.tipe == 'keluar' || l.tipe == 'return') saldoJalan -= l.nom;
+                }
+            });
+
+            // Loop Hari per Hari
+            let c = new Date(tglMulai);
+            const e = new Date(tglAkhir);
+
+            while(c <= e) {
+                let s = getLocalDate(c);
+                let lbl = `${c.getDate()}/${c.getMonth()+1}`;
+                
+                let masuk = db.log.filter(l => l.tgl == s && l.tipe == 'masuk').reduce((a,b)=>a+(b.omzet||b.nom),0);
+                let keluar = db.log.filter(l => l.tgl == s && l.tipe == 'keluar').reduce((a,b)=>a+b.nom,0);
+                
+                // Saldo = Saldo Lama + (Masuk - Keluar)
+                saldoJalan = saldoJalan + (masuk - keluar);
+                
+                points.push({ val: saldoJalan, lbl: lbl, x:0, y:0 });
+                c.setDate(c.getDate()+1);
+            }
+
+            if(points.length === 0) points.push({val:0, lbl:'-', x:0, y:0});
+
+            // 2. HITUNG SKALA (ZOOM OTOMATIS)
+            const vals = points.map(p=>p.val);
+            let min = Math.min(...vals);
+            let max = Math.max(...vals);
+            
+            // Trik: Pastikan angka 0 masuk dalam skala biar garis batas kelihatan
+            if(min > 0) min = 0; 
+            if(max < 0) max = 0;
+
+            let spread = max - min;
+            if(spread === 0) spread = 100000; 
+            
+            min -= spread * 0.1; // Padding Bawah
+            max += spread * 0.1; // Padding Atas
+
+            // 3. EFEK VISUAL (GRADASI & NEON)
+            svg.innerHTML += `
+                <defs>
+                    <linearGradient id="gradArea" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.4" />
+                        <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.0" />
+                    </linearGradient>
+                    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+            `;
+
+            // 4. GARIS GRID & GARIS NOL
+            for(let i=0; i<=4; i++) {
+                let y = 140 - (i * (120/4));
+                svg.innerHTML += `<line x1="30" y1="${y+10}" x2="480" y2="${y+10}" stroke="#f1f5f9" stroke-width="1" />`;
+            }
+            
+            // GARIS BATAS NOL (Merah Putus-putus) - Biar tau mana minus mana plus
+            let zeroY = 150 - ((0 - min) / (max - min) * 120);
+            if(zeroY >= 20 && zeroY <= 150) {
+                svg.innerHTML += `<line x1="30" y1="${zeroY}" x2="480" y2="${zeroY}" stroke="#ef4444" stroke-width="1" stroke-dasharray="4" opacity="0.6"/>`;
+                svg.innerHTML += `<text x="485" y="${zeroY+3}" font-size="9" fill="#ef4444" font-weight="bold">0</text>`;
+            }
+
+            // 5. BUAT JALUR GARIS (Lengkung Halus)
+            const gap = 440 / (Math.max(points.length - 1, 1));
+            let pathD = "";
+            let areaD = "";
+            
+            points.forEach((p, i) => {
+                const x = 35 + (i * gap);
+                const y = 150 - ((p.val - min) / (max - min) * 120);
+                p.x = x; p.y = y; 
+
+                if (i === 0) {
+                    pathD += `M ${x},${y}`;
+                    areaD += `M ${x},${y}`;
+                } else {
+                    const prev = points[i-1];
+                    const cx = (prev.x + x) / 2;
+                    pathD += ` C ${cx},${prev.y} ${cx},${y} ${x},${y}`;
+                    areaD += ` C ${cx},${prev.y} ${cx},${y} ${x},${y}`;
+                }
+            });
+
+            areaD += ` L ${points[points.length-1].x},150 L ${points[0].x},150 Z`;
+
+            // Gambar Area & Garis Neon
+            svg.innerHTML += `<path d="${areaD}" fill="url(#gradArea)" stroke="none" />`;
+            svg.innerHTML += `<path d="${pathD}" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)"/>`;
+
+            // 6. TITIK & LABEL WARNA-WARNI
+            points.forEach((p, i) => {
+                // Warna Titik: Merah kalau minus, Hijau kalau plus
+                let dotColor = p.val < 0 ? '#ef4444' : '#10b981';
+                
+                svg.innerHTML += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="white" stroke="${dotColor}" stroke-width="2" />`;
+                
+                const isLast = i === points.length - 1;
+                const isMax = p.val === max; // Paling Tinggi
+                const isMin = p.val === Math.min(...vals); // Paling Rendah (Jeblok)
+
+                // Label muncul di: Terakhir, Tertinggi, Terendah
+                if (isLast || isMax || isMin) {
+                    let txt = p.val >= 1000000 || p.val <= -1000000 ? (p.val/1000000).toFixed(1)+'jt' : (p.val/1000).toFixed(0)+'k';
+                    let wBox = 36; let xBox = p.x - 18;
+                    
+                    // KOTAK LABEL: Merah kalau minus, Hijau kalau plus
+                    svg.innerHTML += `<rect x="${xBox}" y="${p.y-24}" width="${wBox}" height="18" rx="4" fill="${dotColor}" filter="url(#neonGlow)" />`;
+                    svg.innerHTML += `<text x="${p.x}" y="${p.y-12}" font-size="10" font-weight="bold" fill="white" text-anchor="middle">${txt}</text>`;
+                }
+                
+                if(points.length < 15 || i % 3 === 0) {
+                    svg.innerHTML += `<text x="${p.x}" y="170" font-size="9" fill="#94a3b8" text-anchor="middle">${p.lbl}</text>`;
+                }
+            });
+        }
+
+        function returnBarang(id) {
+            const l = db.log.find(x => x.id == id);
+            if(l && confirm('Return transaksi ini?')) {
+                // Logika simple return stok
+                // Coba tebak produk dari nama log
+                const namaFull = l.ket.split(' (x')[0].replace('Jual ', '');
+                const qty = parseInt(l.ket.split(' (x')[1]);
+                
+                // Cari produk yang cocok namanya
+                const p = db.produk.find(x => {
+                    let n = x.nama;
+                    if(x.varian && x.varian!=='-') n += ` (${x.varian})`;
+                    return n === namaFull;
+                });
+
+                if(p && qty) {
+                    p.stok += qty;
+                    alert(`Stok ${p.nama} dikembalikan +${qty}`);
+                }
+
+                db.log.push({ id: Date.now(), tgl: new Date().toISOString().split('T')[0], tipe: 'return', ket: `[RETURN] ${l.ket}`, nom: l.nom });
+                save();
+            }
+        }
+
+        function filterLowStock() {
+            nav('produk');
+            const tp = document.getElementById('tbl-prod'); tp.innerHTML = '';
+            document.querySelector('#produk h2').innerText = '⚠️ Stok Menipis (<10)';
+            document.querySelector('#produk h2').style.color = 'red';
+            
+            db.produk.forEach(p => {
+                if(p.stok < 10) {
+                    tp.innerHTML += `<tr><td>${p.sku}</td><td>${p.nama}</td><td>${p.varian}</td><td>${rp(p.harga)}</td><td style="color:red; font-weight:bold;">${p.stok}</td><td><button class="btn btn-sm btn-primary" onclick="tambahStok(${p.id})">+ Stok</button></td></tr>`;
+                }
+            });
+            tp.innerHTML += `<tr><td colspan="6" style="text-align:center;"><button class="btn" onclick="nav('produk')">Kembali ke Semua</button></td></tr>`;
+        }
+        function resetJudul() {
+            document.querySelector('#produk h2').innerText = 'Daftar Produk & Stok';
+            document.querySelector('#produk h2').style.color = 'inherit';
+        }
+
+        function downloadExcel() {
+            let csv = "Tanggal,Tipe,Keterangan,Nominal\n";
+            db.log.forEach(l => { csv += `${l.tgl},${l.tipe},"${l.ket}",${l.nom}\n`; });
+            const link = document.createElement("a");
+            link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+            link.download = 'Laporan_Basreng.csv';
+            link.click();
+        }
+        // --- FUNGSI IMPORT DATA (UPLOAD CSV) ---
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            // Izinkan CSV, XLSX, dan XLS agar file mudah terlihat
+            input.accept = '.csv, .xlsx, .xls'; 
+
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const fileName = file.name.toLowerCase();
+                
+                // PERINGATAN WAJIB KONVERSI
+                if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    alert("❌ FILE ERROR: File XLSX tidak bisa diproses langsung! Harap Save As (.csv) dulu.");
+                    return; 
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const csvData = e.target.result;
+                    const rows = csvData.split('\n').slice(1);
+                    let importedCount = 0;
+
+                    rows.forEach(row => {
+                        const cols = row.split(',');
+                        
+                        if (cols.length >= 4 && cols[0].trim().length > 0) {
+                            db.log.push({
+                                id: Date.now() + Math.random(),
+                                tgl: cols[0].trim(),
+                                tipe: cols[1].trim().toLowerCase(),
+                                ket: cols[2].replace(/"/g, '').trim(),
+                                nom: parseInt(cols[3].replace(/[^\d]/g, ''))
+                            });
+                            importedCount++;
+                        }
+                    });
+
+                    save();
+                    alert(`Data berhasil diimpor! Total ${importedCount} baris ditambahkan.`);
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function resetData() {
+            if(confirm('YAKIN HAPUS SEMUA DATA? Data tidak bisa kembali!')) {
+                localStorage.removeItem(KEY);
+                location.reload();
+            }
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
